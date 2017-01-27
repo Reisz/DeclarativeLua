@@ -4,7 +4,8 @@ local array = require "array"
 local prototype = require "Component.prototype"
 
 
-local  _clear_value, _property_marker, _signal_marker = {}, {}, {}
+-- clear value needs to be a function to pass prototype check
+local  _clear_value, _property_marker, _signal_marker = function() end, {}, {}
 local function _apply_clear_value(v)
   if v == _clear_value then return nil else return v end
 end
