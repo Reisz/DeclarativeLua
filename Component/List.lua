@@ -58,10 +58,6 @@ function List:__shl(v)
   return self
 end
 
-function List:__add(other)
-  return List(self.array)():join(other)
-end
-
 function List.__call() end -- to end assginments
 
 return Component.declareType(List)

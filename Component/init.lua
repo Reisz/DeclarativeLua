@@ -3,6 +3,27 @@ local class = require "middleclass"
 local array = require "array"
 local prototype = require "Component.prototype"
 
+local _error_sequence = [[Index %d is not in range.
+All numerical indices should be an uninterrupted sequence starting at 1.]]
+local _error_defaultparam = [[
+The value passed as default parameter %d is of invalid type "%s".]]
+local _error_signalassign = [[Incorrect assignment to signal %s.
+Assign a function or an array of functions to signals.]]
+local _error_nonproto = [[
+The table assigned to property %s is not a valid prototype.
+Use Component.declareType to make your classes compatible to properties.]]
+local _error_indextype = [[Assignment to ignored index %s.
+You should only assign to array indices or string fields.]]
+local _error_nosignal = [[The signal %s could not be found in this Component.]]
+local _error_noprop = [[The property %s could not be found in this Component.]]
+local _error_rdonly = [[Trying to change read-only property %s.]]
+local _error_wrong_type = [[
+Trying to assign value of incorrect type "%s" to property %s.
+Matcher expected type "%s".]]
+local _error_invalid_instance = [[
+Attempting to instance prototype without a corresponding Component.]]
+local _error_type_requirements = [[
+Component values need the member functions get() and set(value) to be present.]]
 
 -- clear value needs to be a function to pass prototype check
 local  _clear_value, _property_marker, _signal_marker = function() end, {}, {}
@@ -97,29 +118,29 @@ function Component.static:prototyped(tbl)
   for i,v in pairs(tbl) do
     local ti, tv = type(i), type(v)
     if ti == "number" then
-      assert(i <= len)  -- TODO message
-      if not _is_signal(v) then
-        assert(self:isValidDefault(v))
-      end
+      assert(i <= len, string.format(_error_sequence, i))
+      assert(_is_signal(v) or self:isValidDefault(v),
+        string.format(_error_defaultparam, i, tostring(v)))
     elseif ti == "string" then
       if _is_signal_assignment(i) then
         if tv == "table" then
           local sig_len = #v
           for sig_i, sig_v in pairs(v) do
-            assert(type(sig_i) == "number" and sig_i <= sig_len) -- TODO message
-            assert(type(sig_v) == "function") -- TODO message
+            assert(type(sig_i) == "number" and sig_i <= sig_len
+              and type(sig_v) == "function",
+              string.format(_error_signalassign, i))
           end
         else
-          assert(tv == "function") -- TODO message
+          assert(tv == "function", string.format(_error_signalassign, i))
         end
         -- TODO dynamically check for signal being present
       elseif tv ~= "table" or prototype.isPrototype(v) then
         -- TODO dynamically check for property being present
       else
-        assert(_is_property(v)) -- TODO message
+        assert(_is_property(v), string.format(_error_nonproto, i))
       end
     else
-      error() -- TODO message
+      error(string.format(_error_indextype, tostring(i)))
     end
   end
 end
@@ -204,7 +225,8 @@ end
 -- (signal : string, callback : function)
 -- (signal : string, receiver : object, callback : string)
 function Component:connect(signal, receiver, callback)
-  local s = self.signals[signal]; assert(s) -- TODO message
+  local s = self.signals[signal]
+  assert(s, string.format(_error_nosignal, signal))
 
   if not callback then
     table.insert(s, receiver)
@@ -216,7 +238,8 @@ end
 -- (signal : string, callback : function)
 -- (signal : string, receiver : object)
 function Component:disconnect(signal, receiver)
-  local s = self.signals[signal]; assert(s) -- TODO message
+  local s = self.signals[signal]
+  assert(s, string.format(_error_nosignal, signal))
 
   if type(receiver) ~= "table" then
     array.filter(s, function(v) if v ~= receiver then return v end end)
@@ -241,7 +264,8 @@ Component.__index = Component.get
 
 function Component:set(name, value)
   local p = self.properties[name]
-  assert(p and not p.read_only) -- TODO message
+  assert(p, string.format(_error_noprop, name))
+  assert(not p.read_only, string.format(_error_rdonly, name))
 
   -- if value type is complex, try assigning directly
   local v = p[1]
@@ -250,7 +274,8 @@ function Component:set(name, value)
   end
 
   -- if value type is basic or would change: check matcher
-  assert(p.matcher(value)) -- TODO message
+  assert(p.matcher(value), string.format(_error_wrong_type,
+    tostring(value), name, tostring(p.matcher)))
 
   p[1] = value
   _notify_change(self, name, value)
@@ -270,17 +295,18 @@ local type_mixin = {
     _notify_change(self._parent, self._name, self:get())
   end,
   instanced = function(self, parent, name)
-    assert(type(self._parent) == "nil" and type(self._name) == "nil") -- TODO message
+    assert(type(self._parent) == "nil" and type(self._name) == "nil",
+      _error_invalid_instance)
     rawset(self, "_parent", parent)
     rawset(self, "_name", name)
   end
 }
 function Component.static.declareType(t)
+  assert(type(t.get) == "function" and type(t.set) == "function",
+    _error_type_requirements)
+  
   prototype.prepare(t)
   t:include(type_mixin)
-
-  assert(type(t.get) == "function") -- TODO message
-  assert(type(t.set) == "function") -- TODO message
 
   return t
 end
