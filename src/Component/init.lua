@@ -139,7 +139,8 @@ function Component.static:prototyped(tbl)
     elseif ti == "string" then
       if _is_signal_assignment(i) then
         -- check value (function or array of functions)
-        if tv == "table" then
+        local callable = _is_callable(v)
+        if tv == "table" and not callable then
           local sig_len = #v
           for sig_i, sig_v in pairs(v) do
             assert(type(sig_i) == "number" and sig_i <= sig_len
@@ -147,7 +148,7 @@ function Component.static:prototyped(tbl)
               string.format(_error_signalassign, i))
           end
         else
-          assert(_is_callable(v), string.format(_error_signalassign, i))
+          assert(callable, string.format(_error_signalassign, i))
         end
 
         -- check for signal being present
@@ -185,10 +186,11 @@ function Component.static.beforeInstance(proto, tbl)
         local nval = tbl[i]
         if _is_signal_assignment(i) then
           -- join multiple functions or function arrays into one array
-          local newSignal = type(nval) == "table" and nval or { nval }
+          local newSignal = (type(nval) == "table" and not _is_callable(nval))
+            	and nval or { nval }
           tbl[i] = newSignal
 
-          if type(oval) == "table" then
+          if type(oval) == "table" and not _is_callable(oval) then
             _prepend_array(newSignal, oval)
           else
             table.insert(newSignal, 1, oval)
@@ -244,9 +246,8 @@ function Component:initialize(tbl)
   for i, v in pairs(self.signals) do
     local name = _signal_assignment_name(i)
     local callback = tbl[name]
-    local t = type(callback)
-    if t == "table" then array.join(v, callback)
-    elseif t ~= "nil" then table.insert(v, callback) end
+    if _is_callable(callback) then table.insert(v, callback)
+    elseif type(callback) == "table" then array.join(v, callback) end
   end
 
   -- tbl should be empty now if check was correct
