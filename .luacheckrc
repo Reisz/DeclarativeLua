@@ -1,2 +1,2 @@
-exclude_files = { "middleclass.lua" }
+exclude_files = { "*/middleclass.lua" }
 std = "max+busted"
