@@ -1,4 +1,5 @@
 local prototype = {}
+local _unpack = unpack or table.unpack
 
 local prototype_mt = {
   __call = function(self, ...)
@@ -8,7 +9,7 @@ local prototype_mt = {
     if bi then result = bi(self, ...) end
 
     if type(result) == "nil" then
-      result = self.proto._new(table.unpack(self.args))
+      result = self.proto._new(_unpack(self.args))
       local ri = result.instanced; if ri then ri(result, ...) end
     end
 
