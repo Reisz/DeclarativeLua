@@ -9,6 +9,7 @@
 --     end
 --   end, {})
 -- end
+-- @module array
 
 local array = {}
 
@@ -263,28 +264,28 @@ end
 local function _comp(a, b) return a == b end
 function array.find(tbl, val, comp)
   comp = comp or _comp
-  
+
   for index = 1, #tbl do
     if comp(tbl[index], val) then return index end
   end
-  
+
   return nil
 end
 
 function array.count(tbl, val, comp)
   comp = comp or _comp
-  
+
   local result = 0
-  
+
   for index = 1, #tbl do
     if comp(tbl[index], val) then
       result = result + 1
     end
   end
-  
+
   return result
 end
-  
+
 
 
 return array

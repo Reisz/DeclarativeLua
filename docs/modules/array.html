@@ -1,0 +1,495 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>Declarative Lua</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><strong>array</strong></li>
+</ul>
+<h2>Classes</h2>
+<ul class="nowrap">
+  <li><a href="../classes/Component.List.html">Component.List</a></li>
+  <li><a href="../classes/Component.html">Component</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>array</code></h1>
+<p>Functions for the array part of tables.</p>
+<p>
+
+</p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">function flatten(tbl)
+  return array.reduce(tbl, function(a,v)
+    if type(v) == &quot;table&quot; then
+      return array.join(a, flatten(v))
+    else
+      return array.append(a, v)
+    end
+  end, {})
+end
+</pre>
+    </ul>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#append">append(tbl[, ...])</a></td>
+	<td class="summary">Append multiple elements to the end of an array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#filter">filter(tbl, callback)</a></td>
+	<td class="summary">Filter an array using a function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#forEach">forEach(tbl, callback)</a></td>
+	<td class="summary">Execute a function on each element of an array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#join">join(tbl[, ...])</a></td>
+	<td class="summary">Join multiple arrays into a single big array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#map">map(tbl, callback)</a></td>
+	<td class="summary">Apply a function to each element of an array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#reduce">reduce(tbl, callback[, init])</a></td>
+	<td class="summary">Apply a function against an accumulator and each element of an array from
+ lowest to highest index.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#reduceRight">reduceRight(tbl, callback[, init])</a></td>
+	<td class="summary">Apply a function against an accumulator and each element of an array from
+ highest to lowest index.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "append"></a>
+    <strong>append(tbl[, ...])</strong>
+    </dt>
+    <dd>
+    Append multiple elements to the end of an array.
+ Ths will append each of its argument from the second onward to the end of the
+ array passed as the first argument.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be written to.
+        </li>
+        <li><span class="parameter">...</span>
+         The elements to be added to the end of <code>tbl</code>.
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>tbl</code>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "filter"></a>
+    <strong>filter(tbl, callback)</strong>
+    </dt>
+    <dd>
+    Filter an array using a function.
+ Traverse the array while removing or changing elements depending on the value
+ that was returned by the passed filter callback. This method will read each
+ index exactly once.</p>
+
+<p> <a href="../modules/array.html#filter">array.filter</a> will make shure to shift all remaining elements into possibly
+ freed spaces, so no additional holes will be created.</p>
+
+<p> To execute a function on each element without changing the structure of the
+ array, neither <a href="../modules/array.html#map">array.map</a> nor <a href="../modules/array.html#forEach">array.forEach</a> include code to fix holes
+ during traversal, wich will increase execution speed for those cases.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be filtered.
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         Function to execute for each element in the array.</p>
+
+<p> Will take three parameters:</p>
+
+<p> <strong>value</strong></p>
+<blockquote>
+    <p>The current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>index</strong></p>
+<blockquote>
+    <p>The index of the current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>tbl</strong></p>
+<blockquote>
+    <p>The array <a href="../modules/array.html#filter">filter</a> was called upon.</p>
+</blockquote>
+
+<p> Return the original value to keep the entry, a new value to change the
+ entry, or <code>nil</code> to remove the entry from the array.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>tbl</code>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "forEach"></a>
+    <strong>forEach(tbl, callback)</strong>
+    </dt>
+    <dd>
+    Execute a function on each element of an array.
+ This funtion will execute a function on each element of an array, without
+ modifiying its content. This is the fastest of the traversal functions and
+ will read each index exactly once.</p>
+
+<p> To modify the contents of an array without removing elements, see
+ <a href="../modules/array.html#map">array.map</a>. To be able remove and modify elements of an array, use
+ <a href="../modules/array.html#filter">array.filter</a>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be traversed.
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         Function to execute for each element in the array.</p>
+
+<p> Will take three parameters:</p>
+
+<p> <strong>value</strong></p>
+<blockquote>
+    <p>The current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>index</strong></p>
+<blockquote>
+    <p>The index of the current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>tbl</strong></p>
+<blockquote>
+    <p>The array <a href="../modules/array.html#forEach">forEach</a> was called upon.</p>
+</blockquote>
+
+<p> Return values are ignored.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>tbl</code>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "join"></a>
+    <strong>join(tbl[, ...])</strong>
+    </dt>
+    <dd>
+    Join multiple arrays into a single big array.
+ This will add all the elements of second table onwards to the end of the
+ first array.</p>
+
+<p> As this function will mutate its first argument, a call like
+ <code>array.join(a, a, a)</code> will not behave as expected. If the first argument
+ appears again anywhere but in the second argument, consider calling this
+ function as <code>a = array.join({}, a, a, a)</code>.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be written to.
+        </li>
+        <li><span class="parameter">...</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The arrays to append to the end of tbl.
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>tbl</code>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "map"></a>
+    <strong>map(tbl, callback)</strong>
+    </dt>
+    <dd>
+    Apply a function to each element of an array.
+ Traverse an array while changing the value of the element depending on the
+ value that was returned by the passed map callback. This method will read
+ each index exactly once.</p>
+
+<p> Be careful when returning <code>nil</code> in the callback function, as this behaviour
+ will introduce holes in your array. To be able to pass <code>nil</code> in order to
+ signal removal, use <a href="../modules/array.html#filter">array.filter</a> instead.</p>
+
+<p> To simply execute a function without changing the content of the array,
+ <a href="../modules/array.html#forEach">array.forEach</a> will be sligtly faster.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be mapped.
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         Function to execute for each element in the array.</p>
+
+<p> Will take three parameters:</p>
+
+<p> <strong>value</strong></p>
+<blockquote>
+    <p>The current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>index</strong></p>
+<blockquote>
+    <p>The index of the current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>tbl</strong></p>
+<blockquote>
+    <p>The array <a href="../modules/array.html#map">map</a> was called upon.</p>
+</blockquote>
+
+<p> Return values are written back to the array. See the main description about
+ returning <code>nil</code> from the callback.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>tbl</code>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "reduce"></a>
+    <strong>reduce(tbl, callback[, init])</strong>
+    </dt>
+    <dd>
+    Apply a function against an accumulator and each element of an array from
+ lowest to highest index.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be reduced.
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         Function to execute for each element in the array.</p>
+
+<p> Will take four parameters:</p>
+
+<p> <strong>accumulator</strong></p>
+<blockquote>
+    <p>Initial value or value last returned by callback.</p>
+</blockquote>
+
+<p> <strong>value</strong></p>
+<blockquote>
+    <p>The current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>index</strong></p>
+<blockquote>
+    <p>The index of the current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>tbl</strong></p>
+<blockquote>
+    <p>The array <a href="../modules/array.html#map">map</a> was called upon.</p>
+</blockquote>
+
+<p> The return value is stored in an accumulator for the next invocation of
+ <code>callback</code>.
+        </li>
+        <li><span class="parameter">init</span>
+         Initial value for the accumulator. If omitted, the
+ accumulator will be set to the value of the first array entry and the first
+ call to <code>callback</code> will be skipped.
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        The accumulator value returned by the last call to <code>callback</code>.
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "reduceRight"></a>
+    <strong>reduceRight(tbl, callback[, init])</strong>
+    </dt>
+    <dd>
+    Apply a function against an accumulator and each element of an array from
+ highest to lowest index.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.3/manual.html#6.6">table</a></span>
+         The array to be reduced.
+        </li>
+        <li><span class="parameter">callback</span>
+            <span class="types"><span class="type">function</span></span>
+         Function to execute for each element in the array.</p>
+
+<p> Will take four parameters:</p>
+
+<p> <strong>accumulator</strong></p>
+<blockquote>
+    <p>Initial value or value last returned by callback.</p>
+</blockquote>
+
+<p> <strong>value</strong></p>
+<blockquote>
+    <p>The current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>index</strong></p>
+<blockquote>
+    <p>The index of the current element being processed in the array.</p>
+</blockquote>
+
+<p> <strong>tbl</strong></p>
+<blockquote>
+    <p>The array <a href="../modules/array.html#map">map</a> was called upon.</p>
+</blockquote>
+
+<p> The return value is stored in an accumulator for the next invocation of
+ <code>callback</code>.
+        </li>
+        <li><span class="parameter">init</span>
+         Initial value for the accumulator. If omitted, the
+ accumulator will be set to the value of the last array entry and the first
+ call to <code>callback</code> will be skipped.
+         (<em>optional</em>)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        The accumulator value returned by the last call to <code>callback</code>.
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.6</a></i>
+<i style="float:right;">Last updated 2017-01-31 12:43:47 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

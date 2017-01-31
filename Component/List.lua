@@ -1,3 +1,4 @@
+--- @classmod Component.List
 local class = require "middleclass"
 local array = require "array"
 

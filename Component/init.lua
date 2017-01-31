@@ -1,3 +1,4 @@
+--- @classmod Component
 local class = require "middleclass"
 
 local array = require "array"
@@ -119,7 +120,7 @@ prototype.prepare(Component)
 function Component.static:prototyped(tbl)
   local len = #tbl
   local signals = {}
-  
+
   for i,v in pairs(tbl) do
     local ti, tv = type(i), type(v)
     if ti == "number" then
@@ -144,7 +145,7 @@ function Component.static:prototyped(tbl)
         else
           assert(tv == "function", string.format(_error_signalassign, i))
         end
-        
+
         -- check for signal being present
         if not signals[_signal_assignment_name(ti)] then
           local klass = self
@@ -331,7 +332,7 @@ local type_mixin = {
 function Component.static.declareType(t)
   assert(type(t.get) == "function" and type(t.set) == "function",
     _error_type_requirements)
-  
+
   prototype.prepare(t)
   t:include(type_mixin)
 
