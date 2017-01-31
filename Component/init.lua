@@ -58,6 +58,8 @@ local function _add_property(self, name, property, value)
   -- set to assigned value
   if type(value) ~= "nil" then
     self:set(name, _apply_clear_value(value))
+  else
+    assert(p.matcher(p[1])) -- TODO message
   end
 end
 local function _notify_change(self, name, value)
@@ -84,8 +86,9 @@ Component.static.static_signals    = { "completed" }
 function Component.static:subclassed(other)
   other.static.static_properties =
     setmetatable({}, { __index = self.static.static_properties })
-  other.static.static_signals    =
-    setmetatable({}, { __index = self.static.static_signals })
+  other.static.static_signals    = {}
+    -- setmetatable({}, { __index = self.static.static_signals })
+    -- NOTE probably not needed
 end
 
 function Component.static:staticProperty(name, value, data)
@@ -115,14 +118,22 @@ end
 prototype.prepare(Component)
 function Component.static:prototyped(tbl)
   local len = #tbl
+  local signals = {}
+  
   for i,v in pairs(tbl) do
     local ti, tv = type(i), type(v)
     if ti == "number" then
       assert(i <= len, string.format(_error_sequence, i))
-      assert(_is_signal(v) or self:isValidDefault(v),
-        string.format(_error_defaultparam, i, tostring(v)))
+      -- all array elements are signals or default values
+      if _is_signal(v) then
+        signals[v.name] = true
+      else
+        assert(self:isValidDefault(v),
+          string.format(_error_defaultparam, i, tostring(v)))
+      end
     elseif ti == "string" then
       if _is_signal_assignment(i) then
+        -- check value (function or array of functions)
         if tv == "table" then
           local sig_len = #v
           for sig_i, sig_v in pairs(v) do
@@ -133,9 +144,20 @@ function Component.static:prototyped(tbl)
         else
           assert(tv == "function", string.format(_error_signalassign, i))
         end
-        -- TODO dynamically check for signal being present
+        
+        -- check for signal being present
+        if not signals[_signal_assignment_name(ti)] then
+          local klass = self
+          repeat
+            if array.find(klass.static_signals, ti) then
+              break
+            end
+            klass = klass.super
+          until not klass
+          assert(klass) -- TODO message
+        end
       elseif tv ~= "table" or prototype.isPrototype(v) then
-        -- TODO dynamically check for property being present
+        assert(self.static_properties[i]) -- TODO message
       else
         assert(_is_property(v), string.format(_error_nonproto, i))
       end
@@ -155,9 +177,10 @@ function Component.static.beforeInstance(proto, tbl)
 
     -- join hash part
     for i,oval in pairs(oldTbl) do
-      if type(i) ~= "number" then
+      if type(i) == "string" then
         local nval = tbl[i]
         if _is_signal_assignment(i) then
+          -- join multiple functions or function arrays into one array
           local newSignal = type(nval) == "table" and nval or { nval }
           tbl[i] = newSignal
 
@@ -166,7 +189,11 @@ function Component.static.beforeInstance(proto, tbl)
           else
             table.insert(newSignal, 1, oval)
           end
+        elseif _is_property(oval) then
+          -- copy dynamic property and change value
+          tbl[i] = Component.static.property(nval, oval)
         elseif type(nval) == "nil" then
+          -- otherwise just overwrite regular assignment
           tbl[i] = oval
         end
       end
