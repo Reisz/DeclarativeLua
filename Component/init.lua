@@ -63,7 +63,7 @@ local function _add_property(self, name, property, value)
   end
 end
 local function _notify_change(self, name, value)
-  self:notify(name .. "Changed", value, name)
+  self:emit(name .. "Changed", value, name)
 end
 local function _signal_assignment_name(name)
   return "on" .. string.upper(string.sub(name, 1, 1)) .. string.sub(name, 2)
@@ -246,7 +246,7 @@ function Component:initialize(tbl)
   end
 
   -- tbl should be empty now if check was correct
-  self:notify("completed")
+  self:emit("completed")
 end
 
 -- (signal : string, callback : function)
@@ -275,7 +275,7 @@ function Component:disconnect(signal, receiver)
   end
 end
 
-function Component:notify(signal, ...)
+function Component:emit(signal, ...)
   for i,v in pairs(self.signals[signal]) do
     if type(i) == "table" then i[v](i, ...) else v(...) end
   end
