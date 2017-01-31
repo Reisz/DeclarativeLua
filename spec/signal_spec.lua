@@ -25,4 +25,10 @@ describe("Component signals", function()
 
     assert.spy(s).was_called(1)
   end)
+
+  it("should have a default onCompleted", function()
+    local s = spy.new(function() end)
+    Component{ onCompleted = function() s() end }()
+    assert.spy(s).was_called(1)
+  end)
 end)

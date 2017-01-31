@@ -147,12 +147,11 @@ function Component.static:prototyped(tbl)
         end
 
         -- check for signal being present
-        if not signals[_signal_assignment_name(ti)] then
+        local signame = string.lower(string.sub(i, 3, 3)) .. string.sub(i, 4)
+        if not signals[signame] then
           local klass = self
           repeat
-            if array.find(klass.static_signals, ti) then
-              break
-            end
+            if array.find(klass.static_signals, signame) then break end
             klass = klass.super
           until not klass
           assert(klass) -- TODO message
