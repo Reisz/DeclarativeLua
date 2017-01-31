@@ -77,6 +77,10 @@ local function _prepend_array(tbl, prep)
   for i = #tbl, 1, -1 do tbl[i + shift] = tbl[i] end
   for i = 1, shift do tbl[i] = prep[i] end
 end
+local function _is_callable(fn)
+  return type(fn) == "function" or (
+    getmetatable(fn) and type(getmetatable(fn).__call) == "function")
+end
 
 
 local Component = class("Component")
@@ -139,11 +143,11 @@ function Component.static:prototyped(tbl)
           local sig_len = #v
           for sig_i, sig_v in pairs(v) do
             assert(type(sig_i) == "number" and sig_i <= sig_len
-              and type(sig_v) == "function",
+              and _is_callable(sig_v),
               string.format(_error_signalassign, i))
           end
         else
-          assert(tv == "function", string.format(_error_signalassign, i))
+          assert(_is_callable(v), string.format(_error_signalassign, i))
         end
 
         -- check for signal being present
