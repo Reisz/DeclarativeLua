@@ -256,7 +256,7 @@ function Component:initialize(tbl)
   for i, v in pairs(self.signals) do
     local callback = tbl[_signal_assignment_name(i)]
     if _is_callable(callback) then table.insert(v, callback)
-    elseif callbcak then array.join(v, callback) end
+    elseif callback then array.join(v, callback) end
   end
 
   -- tbl should be empty now if check was correct
