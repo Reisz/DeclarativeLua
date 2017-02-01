@@ -10,6 +10,12 @@ local _error_defaultparam = [[
 The value passed as default parameter %d is of invalid type "%s".]]
 local _error_signalassign = [[Incorrect assignment to signal %s.
 Assign a function or an array of functions to signals.]]
+local _error_signal_unknown = [[
+Trying to assign to unknown signal %s.
+Use Component.signal("%s") to create this signal dynamically.]]
+local _error_property_unknown = [[
+Trying to assign to unknown property %s.
+Use Component.property("%s", ...) to create this property dynamically.]]
 local _error_nonproto = [[
 The table assigned to property %s is not a valid prototype.
 Use Component.declareType to make your classes compatible to properties.]]
@@ -60,7 +66,8 @@ local function _add_property(self, name, property, value)
   if type(value) ~= "nil" then
     self:set(name, _apply_clear_value(value))
   else
-    assert(p.matcher(p[1])) -- TODO message
+    assert(p.matcher(p[1]), string.format(_error_wrong_type,
+      tostring(p[1]), name, tostring(p.matcher)))
   end
 end
 local function _notify_change(self, name, value)
@@ -92,8 +99,6 @@ function Component.static:subclassed(other)
   other.static.static_properties =
     setmetatable({}, { __index = self.static.static_properties })
   other.static.static_signals    = {}
-    -- setmetatable({}, { __index = self.static.static_signals })
-    -- NOTE probably not needed
 end
 
 function Component.static:staticProperty(name, value, data)
@@ -125,11 +130,23 @@ function Component.static:prototyped(tbl)
   local len = #tbl
   local signals = {}
 
+  -- iterate over all elemets of the table checking the following properties:
+  -- - all indices should either strings or fall into the array part of a table
+  -- - string indices:
+  --   - assignments to existing static or dynmic properties
+  --     - using basic values (everything but tables) or prototypes
+  --   - assignments to create new dynamic properties (using Component.property)
+  --   - assignments to connect to signals (`on%u.*`)
+  --     - a callable value (function or table with `__call`)
+  --     - an array of callable values
+  -- - array part:
+  --   - assignments to the default property (basic value or prototype)
+  --   - creating new dynamic signals (using Component.signal)
+
   for i,v in pairs(tbl) do
     local ti, tv = type(i), type(v)
     if ti == "number" then
       assert(i <= len, string.format(_error_sequence, i))
-      -- all array elements are signals or default values
       if _is_signal(v) then
         signals[v.name] = true
       else
@@ -138,32 +155,31 @@ function Component.static:prototyped(tbl)
       end
     elseif ti == "string" then
       if _is_signal_assignment(i) then
-        -- check value (function or array of functions)
-        local callable = _is_callable(v)
-        if tv == "table" and not callable then
+        -- check assigned value to be callable or array of callables
+        if not _is_callable(v) then
+          assert(tv == "table", string.format(_error_signalassign, i))
           local sig_len = #v
+          assert(sig_len > 0, string.format(_error_signalassign, i))
           for sig_i, sig_v in pairs(v) do
-            assert(type(sig_i) == "number" and sig_i <= sig_len
-              and _is_callable(sig_v),
-              string.format(_error_signalassign, i))
+            local validIndex = type(sig_i) == "number" and sig_i <= sig_len
+            assert(validIndex and _is_callable(sig_v), string.format(_error_signalassign, i))
           end
-        else
-          assert(callable, string.format(_error_signalassign, i))
         end
 
         -- check for signal being present
         local signame = string.lower(string.sub(i, 3, 3)) .. string.sub(i, 4)
         if not signals[signame] then
-          local klass = self
-          repeat
+          local klass = self; repeat
             if array.find(klass.static_signals, signame) then break end
             klass = klass.super
           until not klass
-          assert(klass) -- TODO message
+          assert(klass, string.format(_error_signal_unknown, i, signame))
         end
       elseif tv ~= "table" or prototype.isPrototype(v) then
-        assert(self.static_properties[i]) -- TODO message
+        -- regular assignment to property: check presence
+        assert(self.static_properties[i], string.format(_error_property_unknown, i, i))
       else
+        -- last possible case: creating a new dynamic property
         assert(_is_property(v), string.format(_error_nonproto, i))
       end
     else
@@ -186,20 +202,14 @@ function Component.static.beforeInstance(proto, tbl)
         local nval = tbl[i]
         if _is_signal_assignment(i) then
           -- join multiple functions or function arrays into one array
-          local newSignal = (type(nval) == "table" and not _is_callable(nval))
-            and nval or { nval }
-          tbl[i] = newSignal
-
-          if type(oval) == "table" and not _is_callable(oval) then
-            _prepend_array(newSignal, oval)
-          else
-            table.insert(newSignal, 1, oval)
-          end
+          tbl[i] = _is_callable(nval) and { nval } or nval
+          if _is_callable(oval) then table.insert(tbl[i], 1, oval)
+          else _prepend_array(tbl[i], oval) end
         elseif _is_property(oval) then
-          -- copy dynamic property and change value
+          -- copy dynamic property: change value, keep data
           tbl[i] = Component.static.property(nval, oval)
         elseif type(nval) == "nil" then
-          -- otherwise just overwrite regular assignment
+          -- copy over omitted assignments
           tbl[i] = oval
         end
       end
@@ -244,10 +254,9 @@ function Component:initialize(tbl)
 
   -- initialize signal assignments
   for i, v in pairs(self.signals) do
-    local name = _signal_assignment_name(i)
-    local callback = tbl[name]
+    local callback = tbl[_signal_assignment_name(i)]
     if _is_callable(callback) then table.insert(v, callback)
-    elseif type(callback) == "table" then array.join(v, callback) end
+    else array.join(v, callback) end
   end
 
   -- tbl should be empty now if check was correct
