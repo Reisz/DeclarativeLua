@@ -82,6 +82,26 @@ describe("Component signals", function()
     assert.spy(s1).was_called(3)
     assert.spy(s2).was_called(3)
     assert.spy(s3).was_called(2)
+
+    Component{}{ onCompleted = s3 }()
+    assert.spy(s1).was_called(3)
+    assert.spy(s2).was_called(3)
+    assert.spy(s3).was_called(3)
+
+    Component{}{ onCompleted = { s1, s2, s3 } }()
+    assert.spy(s1).was_called(4)
+    assert.spy(s2).was_called(4)
+    assert.spy(s3).was_called(4)
+
+    Component{ onCompleted = { s1, s2, s3 } }{}()
+    assert.spy(s1).was_called(5)
+    assert.spy(s2).was_called(5)
+    assert.spy(s3).was_called(5)
+        
+    Component{ onCompleted = s3 }{}()
+    assert.spy(s1).was_called(5)
+    assert.spy(s2).was_called(5)
+    assert.spy(s3).was_called(6)
   end)
 
   it("should be able to add new static signals", function()
