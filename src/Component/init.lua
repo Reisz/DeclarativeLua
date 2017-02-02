@@ -15,6 +15,10 @@ Trying to assign to unknown signal %s.
 Use Component.signal("%s") to create this signal dynamically.]]
 local _error_signalname = [[ Invalid name for signal %s.
 Signal names can only be strings starting with a lowercase character.]]
+local _error_static_check = [[
+Static checking found %d errors. See the messages below:
+
+]]
 local _error_property_unknown = [[
 Trying to assign to unknown property %s.
 Use Component.property("%s", ...) to create this property dynamically.]]
@@ -131,9 +135,17 @@ function Component.static.signal(name)
 end
 
 prototype.prepare(Component)
+
+-- debug only, set to nil in releases
 function Component.static:prototyped(tbl)
   local len = #tbl
   local signals = {}
+
+  local messages, next_message = {}, 1
+  local function _report(...)
+    messages[next_message] = string.format(...)
+    next_message = next_message + 1
+  end
 
   -- iterate over all elemets of the table checking the following properties:
   -- - all indices should either strings or fall into the array part of a table
@@ -151,25 +163,33 @@ function Component.static:prototyped(tbl)
   for i,v in pairs(tbl) do
     local ti, tv = type(i), type(v)
     if ti == "number" then
-      assert(i <= len, string.format(_error_sequence, i))
-      if _is_signal(v) then
-        assert(_is_signal_name(v.name),
-          string.format(_error_signalname, tostring(v.name)))
-        signals[v.name] = true
+      if i > len then
+        _report(_error_sequence, i)
+      elseif _is_signal(v) then
+        if _is_signal_name(v.name) then
+          signals[v.name] = true
+        else
+          _report(_error_signalname, tostring(v.name))
+        end
       else
-        assert(self:isValidDefault(v),
-          string.format(_error_defaultparam, i, tostring(v)))
+        if not self:isValidDefault(v) then
+          _report(_error_defaultparam, i, tostring(v))
+        end
       end
     elseif ti == "string" then
       if _is_signal_assignment(i) then
         -- check assigned value to be callable or array of callables
         if not _is_callable(v) then
-          assert(tv == "table", string.format(_error_signalassign, i))
-          local sig_len = #v
-          assert(sig_len > 0, string.format(_error_signalassign, i))
-          for sig_i, sig_v in pairs(v) do
-            local validIndex = type(sig_i) == "number" and sig_i <= sig_len
-            assert(validIndex and _is_callable(sig_v), string.format(_error_signalassign, i))
+          if tv ~= table then
+            _report(_error_signalassign, i)
+          else
+            local sig_len = #v
+            if sig_len <= 0 then _report(_error_signalassign, i) end
+            for sig_i, sig_v in pairs(v) do
+              if type(sig_i) ~= "number" or sig_i > sig_len or not _is_callable(sig_v) then
+                _report(_error_signalassign, i)
+              end
+            end
           end
         end
 
@@ -180,18 +200,24 @@ function Component.static:prototyped(tbl)
             if array.find(klass.static_signals, signame) then break end
             klass = klass.super
           until not klass
-          assert(klass, string.format(_error_signal_unknown, i, signame))
+          if not klass then _report(_error_signal_unknown, i, signame) end
         end
       elseif tv ~= "table" or prototype.isPrototype(v) then
         -- regular assignment to property: check presence
-        assert(self.static_properties[i], string.format(_error_property_unknown, i, i))
+        if not self.static_properties[i] then
+          _report(_error_property_unknown, i, i)
+        end
       else
         -- last possible case: creating a new dynamic property
-        assert(_is_property(v), string.format(_error_nonproto, i))
+        if not _is_property(v) then _report(_error_nonproto, i) end
       end
     else
-      error(string.format(_error_indextype, tostring(i)))
+      _report(_error_indextype, tostring(i))
     end
+  end
+
+  if next_message > 1 then
+    error(string.format(_error_static_check, next_message - 1) .. table.concat(messages, "\n"))
   end
 end
 
