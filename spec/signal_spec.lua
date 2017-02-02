@@ -92,4 +92,30 @@ describe("Component signals", function()
     c:emit("test")
     assert.spy(s).was_called(1)
   end)
+
+  it("should be able to assign to static signals from superclasses", function()
+    local Subclass = Component:subclass("Subclass")
+    local s = spy.new(function() end)
+    Subclass { onCompleted = s }()
+    assert.spy(s).was_called(1)
+  end)
+
+  it("should fail when assigning signals incorrectly", function()
+    assert.has_error(function() Component { onTest = function() end } end)
+    assert.has_error(function() Component { onCompleted = 1 } end)
+    assert.has_error(function() Component { onCompleted = { [2] = function() end } } end)
+    assert.has_error(function() Component { onCompleted = { a = function() end } } end)
+    assert.has_error(function() Component { onCompleted = { 1 } } end)
+    assert.has_error(function() Component { onCompleted = {} } end)
+  end)
+
+  it("should fail when calling connect incorrectly", function()
+    assert.has_error(function() Component{}():connect("test", function() end) end)
+    -- connect is not type-check for speed
+  end)
+
+  -- TODO error on disconnect
+  -- TODO disconnect single functions
+  -- TODO disconnect member funcitons
+  -- TODO disconnect all members
 end)
