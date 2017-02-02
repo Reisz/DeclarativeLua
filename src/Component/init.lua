@@ -115,7 +115,7 @@ end
 
 function Component.static:staticSignal(name)
   assert(_is_signal_name(name),
-    string.format(_error_signalname, tostring(name))
+    string.format(_error_signalname, tostring(name)))
   table.insert(self.static.static_signals, name)
 end
 
@@ -154,7 +154,7 @@ function Component.static:prototyped(tbl)
       assert(i <= len, string.format(_error_sequence, i))
       if _is_signal(v) then
         assert(_is_signal_name(v.name),
-          string.format(_error_signalname, tostring(v.name))
+          string.format(_error_signalname, tostring(v.name)))
         signals[v.name] = true
       else
         assert(self:isValidDefault(v),
