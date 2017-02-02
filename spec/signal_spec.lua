@@ -109,6 +109,13 @@ describe("Component signals", function()
     assert.has_error(function() Component { onCompleted = {} } end)
   end)
 
+  it("should fail when creating signals incorrectly", function()
+    assert.has_error(function() Component { Component.signal(1) } end)
+    assert.has_error(function() Component { Component.signal("A") } end)
+    assert.has_error(function() Component:subclass(""):staticSignal(1) end)
+    assert.has_error(function() Component:subclass(""):staticSignal("A") end)
+  end)
+
   it("should fail when calling connect incorrectly", function()
     assert.has_error(function() Component{}():connect("test", function() end) end)
     -- connect is not type-check for speed
