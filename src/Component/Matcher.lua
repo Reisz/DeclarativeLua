@@ -16,15 +16,11 @@ local rules = setmetatable({}, { __index = safeMethods })
 local _create_function
 if _VERSION == "Lua 5.1" then
   _create_function = function(m)
-    local fn, msg = loadstring("return " .. m)
-    if not fn then error(msg) end
-    return setfenv(fn, rules)()
+    return setfenv(assert(loadstring("return " .. m)), rules)()
   end
 else -- Lua 5.2 or higher
   _create_function = function(m)
-    local fn, msg = load("return " .. m, "matcher", "bt", rules)
-    if not fn then error(msg) end
-    return fn()
+    return assert(load("return " .. m, "matcher", "bt", rules))()
   end
 end
 

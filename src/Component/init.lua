@@ -3,6 +3,7 @@ local class = require "middleclass"
 
 local array = require "array"
 local prototype = require "Component.prototype"
+local Matcher = require "Component.Matcher"
 
 local _error_sequence = [[Index %d is not in range.
 All numerical indices should be an uninterrupted sequence starting at 1.]]
@@ -15,10 +16,6 @@ Trying to assign to unknown signal %s.
 Use Component.signal("%s") to create this signal dynamically.]]
 local _error_signalname = [[ Invalid name for signal %s.
 Signal names can only be strings starting with a lowercase character.]]
-local _error_static_check = [[
-Static checking found %d errors. See the messages below:
-
-]]
 local _error_property_unknown = [[
 Trying to assign to unknown property %s.
 Use Component.property("%s", ...) to create this property dynamically.]]
@@ -37,6 +34,10 @@ local _error_invalid_instance = [[
 Attempting to instance prototype without a corresponding Component.]]
 local _error_type_requirements = [[
 Component values need the member functions get() and set(value) to be present.]]
+local _error_static_check = [[
+Static checking found %d errors. See the messages below:
+
+]]
 
 -- clear value needs to be a function to pass prototype check
 local  _clear_value, _property_marker, _signal_marker = function() end, {}, {}
@@ -51,9 +52,11 @@ local function _is_signal(v)
 end
 local function _default_matcher() return true end
 local function _new_property(value, data)
+  local matcher = data and data.matcher
+  if type(matcher) == "string" then matcher = Matcher(matcher) end
   return {
     value, read_only = data and data.read_only,
-    matcher = data and data.matcher or _default_matcher
+    matcher = matcher or _default_matcher
   }
 end
 local _signal_mt = { __mode = "k" }
@@ -94,8 +97,8 @@ local function _is_signal_name(name)
   return type(name) == "string" and string.find(name, "^%l")
 end
 local function _is_callable(fn)
-  return type(fn) == "function" or (
-    getmetatable(fn) and type(getmetatable(fn).__call) == "function")
+  return type(fn) == "function" or
+    type((getmetatable(fn) or _property_marker).__call)  == "function"
 end
 
 
