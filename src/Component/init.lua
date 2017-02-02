@@ -235,9 +235,13 @@ function Component.static.beforeInstance(proto, tbl)
         local nval = tbl[i]
         if _is_signal_assignment(i) then
           -- join multiple functions or function arrays into one array
-          tbl[i] = _is_callable(nval) and { nval } or nval
-          if _is_callable(oval) then table.insert(tbl[i], 1, oval)
-          else _prepend_array(tbl[i], oval) end
+          if nval then
+            tbl[i] = _is_callable(nval) and { nval } or nval
+            if _is_callable(oval) then table.insert(tbl[i], 1, oval)
+            else _prepend_array(tbl[i], oval) end
+          else
+            tbl[i] = oval
+          end
         elseif _is_property(oval) then
           -- copy dynamic property: change value, keep data
           tbl[i] = Component.static.property(nval, oval)

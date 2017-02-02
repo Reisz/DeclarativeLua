@@ -1,6 +1,10 @@
 language: python
 sudo: false
 
+branches:
+  except:
+  - temp
+
 env:
   - LUA="lua=5.1"
   - LUA="lua=5.2"

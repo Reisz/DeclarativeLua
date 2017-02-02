@@ -97,7 +97,7 @@ describe("Component signals", function()
     assert.spy(s1).was_called(5)
     assert.spy(s2).was_called(5)
     assert.spy(s3).was_called(5)
-        
+
     Component{ onCompleted = s3 }{}()
     assert.spy(s1).was_called(5)
     assert.spy(s2).was_called(5)
