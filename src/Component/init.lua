@@ -180,7 +180,7 @@ function Component.static:prototyped(tbl)
       if _is_signal_assignment(i) then
         -- check assigned value to be callable or array of callables
         if not _is_callable(v) then
-          if tv ~= table then
+          if tv ~= "table" then
             _report(_error_signalassign, i)
           else
             local sig_len = #v
