@@ -13,6 +13,8 @@ Assign a function or an array of functions to signals.]]
 local _error_signal_unknown = [[
 Trying to assign to unknown signal %s.
 Use Component.signal("%s") to create this signal dynamically.]]
+local _error_signalname = [[ Invalid name for signal %s.
+Signal names can only be strings starting with a lowercase character.]]
 local _error_property_unknown = [[
 Trying to assign to unknown property %s.
 Use Component.property("%s", ...) to create this property dynamically.]]
@@ -84,6 +86,9 @@ local function _prepend_array(tbl, prep)
   for i = #tbl, 1, -1 do tbl[i + shift] = tbl[i] end
   for i = 1, shift do tbl[i] = prep[i] end
 end
+local function _is_signal_name(name)
+  return type(name) == "string" and string.find(name, "^%l")
+end
 local function _is_callable(fn)
   return type(fn) == "function" or (
     getmetatable(fn) and type(getmetatable(fn).__call) == "function")
@@ -109,8 +114,8 @@ function Component.static:staticProperty(name, value, data)
 end
 
 function Component.static:staticSignal(name)
-  -- TODO improve assertions
-  assert(type(name) == "string")
+  assert(_is_signal_name(name),
+    string.format(_error_signalname, tostring(name))
   table.insert(self.static.static_signals, name)
 end
 
@@ -148,6 +153,8 @@ function Component.static:prototyped(tbl)
     if ti == "number" then
       assert(i <= len, string.format(_error_sequence, i))
       if _is_signal(v) then
+        assert(_is_signal_name(v.name),
+          string.format(_error_signalname, tostring(v.name))
         signals[v.name] = true
       else
         assert(self:isValidDefault(v),
