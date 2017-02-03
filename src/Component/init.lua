@@ -322,10 +322,9 @@ function Component:disconnect(signal, receiver)
   local s = self.signals[signal]
   assert(s, string.format(_error_nosignal, signal))
 
-  if type(receiver) ~= "table" then
+  s[receiver] = nil
+  if _is_callable(receiver) then
     array.filter(s, function(v) if v ~= receiver then return v end end)
-  else
-    s[receiver] = nil
   end
 end
 
