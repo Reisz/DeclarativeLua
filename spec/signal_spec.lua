@@ -148,7 +148,7 @@ describe("Component signals", function()
   end)
 
   it("should be able to disconnect functions", function()
-    local c = Component{ Component.signal("test") }
+    local c = Component{ Component.signal("test") }()
     local s = spy.new(function() end)
     local f = function() s() end
     c:connect("test", f)
@@ -159,7 +159,7 @@ describe("Component signals", function()
   end)
 
   it("should be able to disconnect callables", function()
-    local c = Component{ Component.signal("test") }
+    local c = Component{ Component.signal("test") }()
     local s = spy.new(function() end)
     c:connect("test", s)
     c:emit("test")
@@ -169,7 +169,7 @@ describe("Component signals", function()
   end)
 
   it("should be able to disconnect member functions", function()
-    local c = Component{ Component.signal("test") }
+    local c = Component{ Component.signal("test") }()
     local s = spy.new(function() end)
     local o = { f = function() s() end }
     c:connect("test", o, "f")
@@ -180,7 +180,7 @@ describe("Component signals", function()
   end)
 
   it("should be able to disconnect member callables", function()
-    local c = Component{ Component.signal("test") }
+    local c = Component{ Component.signal("test") }()
     local s = spy.new(function() end)
     local o = { f = s }
     c:connect("test", o, "f")
@@ -191,7 +191,7 @@ describe("Component signals", function()
   end)
 
   it("should be able to disconnect members of callables", function()
-    local c = Component{ Component.signal("test") }
+    local c = Component{ Component.signal("test") }()
     local s1, s2 = spy.new(function() end), spy.new(function() end)
     local o = setmetatable({ f = s1 }, { __call = function() s2() end })
     c:connect("test", o, "f")
