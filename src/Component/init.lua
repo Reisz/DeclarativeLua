@@ -305,6 +305,8 @@ end
 
 -- (signal : string, callback : function)
 -- (signal : string, receiver : object, callback : string)
+-- having a callable object and one or more of its members connected
+-- at the same time will result in undefined behaviour
 function Component:connect(signal, receiver, callback)
   local s = self.signals[signal]
   assert(s, string.format(_error_nosignal, signal))
@@ -312,25 +314,56 @@ function Component:connect(signal, receiver, callback)
   if not callback then
     table.insert(s, receiver)
   else
-    s[receiver] = callback
+    local r = s[receiver]
+    if not r then r = {}; s[receiver] = r end
+    table.insert(r, callback)
   end
 end
 
--- (signal : string, callback : function)
--- (signal : string, receiver : object)
-function Component:disconnect(signal, receiver)
-  local s = self.signals[signal]
-  assert(s, string.format(_error_nosignal, signal))
-
-  s[receiver] = nil
-  if _is_callable(receiver) then
-    array.filter(s, function(v) if v ~= receiver then return v end end)
+-- disconnect everyting    (signal : name)
+-- disconnect one function (signal : name, callback : function)
+-- disconnect all members  (signal : name, receiver : object)
+-- disconnect one member   (signal : name, receiver : object, callback : string)
+-- pass signal = "*" to disconnect from all signals
+-- having a callable object and one or more of its members connected
+-- at the same time will result in undefined behaviour
+local function _disconnect(signal, receiver, callback)
+  if not receiver then
+    -- disconnect everything
+    for i in pairs(signal) do signal[i] = nil end
+  else
+    if not callback then
+      -- disconnect all members
+      s[receiver] = nil
+      -- disconnect one function
+      if _is_callable(receiver) then
+        array.filter(s, function(v) if v ~= receiver then return v end end)
+      end
+    else
+      -- disconnect one member
+      array.filter(s[receiver], function(v) if v ~= callback then return v end)
+    end
+  end
+end
+function Component:disconnect(signal, receiver, callback)
+  if s == "*" then
+    for _,v in pairs(self.signals) do _disconnect(v, receiver, callback) end
+  else
+    local s = self.signals[signal]
+    assert(s, string.format(_error_nosignal, signal))
+    _disconnect(s)
   end
 end
 
 function Component:emit(signal, ...)
   for i,v in pairs(self.signals[signal]) do
-    if type(i) == "table" then i[v](i, ...) else v(...) end
+    if type(i) == "table" then
+      for _,cb in ipairs(v) do
+        i[cb](i, ...)
+      end
+    else
+        v(...)
+    end
   end
 end
 
