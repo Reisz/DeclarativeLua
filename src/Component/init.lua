@@ -334,14 +334,14 @@ local function _disconnect(signal, receiver, callback)
   else
     if not callback then
       -- disconnect all members
-      s[receiver] = nil
+      signal[receiver] = nil
       -- disconnect one function
       if _is_callable(receiver) then
-        array.filter(s, function(v) if v ~= receiver then return v end end)
+        array.filter(signal, function(v) if v ~= receiver then return v end end)
       end
     else
       -- disconnect one member
-      array.filter(s[receiver], function(v) if v ~= callback then return v end)
+      array.filter(signal[receiver], function(v) if v ~= callback then return v end end)
     end
   end
 end
