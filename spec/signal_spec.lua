@@ -147,6 +147,61 @@ describe("Component signals", function()
     assert.spy(s).was_called(1)
   end)
 
+  it("should be able to disconnect functions", function()
+    local c = Component{ Component.signal("test") }
+    local s = spy.new(function() end)
+    local f = function() s() end
+    c:connect("test", f)
+    c:emit("test")
+    c:disconnect("test", f)
+    c:emit("test")
+    assert.spy(s).was_called(1)
+  end)
+
+  it("should be able to disconnect callables", function()
+    local c = Component{ Component.signal("test") }
+    local s = spy.new(function() end)
+    c:connect("test", s)
+    c:emit("test")
+    c:disconnect("test", s)
+    c:emit("test")
+    assert.spy(s).was_called(1)
+  end)
+
+  it("should be able to disconnect member functions", function()
+    local c = Component{ Component.signal("test") }
+    local s = spy.new(function() end)
+    local o = { f = function() s() end }
+    c:connect("test", o, "f")
+    c:emit("test")
+    c:disconnect("test", o)
+    c:emit("test")
+    assert.spy(s).was_called(1)
+  end)
+
+  it("should be able to disconnect member callables", function()
+    local c = Component{ Component.signal("test") }
+    local s = spy.new(function() end)
+    local o = { f = s }
+    c:connect("test", o, "f")
+    c:emit("test")
+    c:disconnect("test", o)
+    c:emit("test")
+    assert.spy(s).was_called(1)
+  end)
+
+  it("should be able to disconnect members of callables", function()
+    local c = Component{ Component.signal("test") }
+    local s1, s2 = spy.new(function() end), spy.new(function() end)
+    local o = setmetatable({ f = s1 }, { __call = function() s2() end })
+    c:connect("test", o, "f")
+    c:emit("test")
+    c:disconnect("test", o)
+    c:emit("test")
+    assert.spy(s1).was_called(1)
+    assert.spy(s2).was_called(0)
+  end)
+
   it("should fail when assigning signals incorrectly", function()
     assert.has_error(function() Component { onTest = function() end } end)
     assert.has_error(function() Component { onCompleted = 1 } end)
@@ -169,7 +224,5 @@ describe("Component signals", function()
   end)
 
   -- TODO error on disconnect
-  -- TODO disconnect single functions
   -- TODO disconnect member funcitons
-  -- TODO disconnect all members
 end)
