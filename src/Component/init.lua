@@ -346,7 +346,7 @@ local function _disconnect(signal, receiver, callback)
   end
 end
 function Component:disconnect(signal, receiver, callback)
-  if s == "*" then
+  if signal == "*" then
     for _,v in pairs(self.signals) do _disconnect(v, receiver, callback) end
   else
     local s = self.signals[signal]
