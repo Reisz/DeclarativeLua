@@ -351,7 +351,7 @@ function Component:disconnect(signal, receiver, callback)
   else
     local s = self.signals[signal]
     assert(s, string.format(_error_nosignal, signal))
-    _disconnect(s)
+    _disconnect(s, receiver, callback)
   end
 end
 
