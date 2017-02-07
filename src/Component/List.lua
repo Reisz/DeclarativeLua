@@ -61,4 +61,13 @@ end
 
 function List.__call() end -- to end assginments
 
+require("Component.Matcher").addRule("List", function(self, v)
+  local argc = #self
+  if argc == 0 then
+    return type(v) == "table" and (v.class == List or v.proto == List)
+  end
+  -- TODO add more functionality
+  return false
+end)
+
 return Component.declareType(List)
