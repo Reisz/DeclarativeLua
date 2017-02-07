@@ -183,7 +183,6 @@ describe("Component signals", function()
 
   it("should be able to disconnect member callables", function()
     local c = Component{ Component.signal("test") }()
-    local s = spy.new(function() end)
     local s1, s2 = spy.new(function() end), spy.new(function() end)
     local o = { f = s1, g = s2 }
     c:connect("test", o, "f")
@@ -212,7 +211,6 @@ describe("Component signals", function()
 
   it("should be able to disconnect all members", function()
     local c = Component{ Component.signal("test") }()
-    local s = spy.new(function() end)
     local s1, s2 = spy.new(function() end), spy.new(function() end)
     local o = { f = s1, g = s2 }
     c:connect("test", o, "f")
