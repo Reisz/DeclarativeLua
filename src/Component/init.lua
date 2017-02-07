@@ -215,7 +215,9 @@ function Component.static:prototyped(tbl)
       else
         -- last possible case: creating a new dynamic property
         if _is_property(v) then
-          if type(v.matcher) ~= "string" and not Matcher.isMatcher(v.matcher) then
+          local m = v.matcher
+          if m ~= _default_matcher and type(m) ~= "string" and
+            not Matcher.isMatcher(m) then
             _report(_error_not_matcher, i)
           end
         else
