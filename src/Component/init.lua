@@ -390,6 +390,10 @@ function Component:set(name, value)
   assert(p.matcher(value), string.format(_error_wrong_type,
     tostring(value), name, tostring(p.matcher)))
 
+  if prototype.isPrototype(value) then
+    value = value(self, name)
+  end
+
   p[1] = value
   _notify_change(self, name, value)
 end
