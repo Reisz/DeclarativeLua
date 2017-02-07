@@ -24,6 +24,8 @@ The table assigned to property %s is not a valid prototype.
 Use Component.declareType to make your classes compatible to properties.]]
 local _error_indextype = [[Assignment to ignored index %s.
 You should only assign to array indices or string fields.]]
+local _error_not_matcher = [[Ivalid matcher for property %s.
+Property matchers need to be a valid Matcher or a string compiling into one.]]
 local _error_nosignal = [[The signal %s could not be found in this Component.]]
 local _error_noprop = [[The property %s could not be found in this Component.]]
 local _error_rdonly = [[Trying to change read-only property %s.]]
@@ -212,7 +214,13 @@ function Component.static:prototyped(tbl)
         end
       else
         -- last possible case: creating a new dynamic property
-        if not _is_property(v) then _report(_error_nonproto, i) end
+        if _is_property(v) then
+          if type(v.matcher) ~= "string" and not Matcher.isMatcher(v.matcher) then
+            _report(_error_not_matcher, i)
+          end
+        else
+          _report(_error_nonproto, i)
+        end
       end
     else
       _report(_error_indextype, tostring(i))
