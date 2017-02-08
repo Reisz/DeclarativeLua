@@ -328,6 +328,7 @@ describe("Component signals", function()
     -- connect is not type-checked for performance reasons
   end)
 
-  -- TODO error on disconnect
-  -- TODO disconnect member funcitons
+  it("should fail when calling disconnect incorrectly", function()
+    assert.has_error(function() Component{}():disconnect("test", function() end) end)
+  end)
 end)
