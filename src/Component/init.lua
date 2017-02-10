@@ -41,8 +41,9 @@ Static checking found %d errors. See the messages below:
 
 ]]
 
--- clear value needs to be a function to pass prototype check
-local  _clear_value, _property_marker, _signal_marker = function() end, {}, {}
+-- clear and placeholder values needs to be a function to pass prototype check
+local  _clear_value, _placeholder_value, _property_marker, _signal_marker =
+  function() end, function() end, {}, {}
 local function _apply_clear_value(v)
   if v == _clear_value then return nil else return v end
 end
@@ -75,6 +76,7 @@ local function _add_property(self, name, property, value)
 
   -- set to assigned value
   if type(value) ~= "nil" then
+    if value == _placeholder_value then return end
     self:set(name, _apply_clear_value(value))
   else
     assert(p.matcher(p[1]), string.format(_error_wrong_type,
@@ -108,7 +110,7 @@ local Component = class("Component")
 
 -- provide the ability to have static properties and signals
 Component.static.static_properties = {}
-Component.static.static_signals    = { "completed" }
+Component.static.static_signals    = {}
 function Component.static:subclassed(other)
   other.static.static_properties =
     setmetatable({}, { __index = self.static.static_properties })
@@ -128,8 +130,12 @@ function Component.static:staticSignal(name)
   table.insert(self.static.static_signals, name)
 end
 
+Component:staticProperty("isCompleted", false, { read_only = true })
+Component:staticSignal("completed")
+
 -- provide the ability to add properties and signals and set nil on creation
-Component.static.clearValue = _clear_value
+Component.static.clear = _clear_value
+Component.static._placeholder = _placeholder_value
 function Component.static.property(value, data)
   local p = _new_property(value, data)
   p[_property_marker] = true
@@ -310,7 +316,9 @@ function Component:initialize(tbl)
   end
 
   -- tbl should be empty now if check was correct
+  self:_set("isCompleted", true)
   self:emit("completed")
+  self.signals.completed = nil
 end
 
 -- (signal : string, callback : function)
@@ -385,6 +393,19 @@ function Component:get(name)
 end
 Component.__index = Component.get
 
+local function _set(self, property, name, value)
+  if prototype.isPrototype(value) then
+    value = value(self, name)
+  end
+  
+  property[1] = value
+  _notify_change(self, name, value)
+end
+
+function Component:_set(name, value)
+  _set(self, self.properties[name], name, value)
+end
+
 function Component:set(name, value)
   local p = self.properties[name]
   assert(p, string.format(_error_noprop, name))
@@ -400,12 +421,7 @@ function Component:set(name, value)
   assert(p.matcher(value), string.format(_error_wrong_type,
     tostring(value), name, tostring(p.matcher)))
 
-  if prototype.isPrototype(value) then
-    value = value(self, name)
-  end
-
-  p[1] = value
-  _notify_change(self, name, value)
+  _set(self, p, name, value)
 end
 
 function Component:__newindex(name, value)
