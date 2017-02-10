@@ -28,12 +28,13 @@ local Binding = class("Binding")
 -- register all callbacks, then set initial value
 function Binding:initialize(tbl)
   self.component = tbl.component
-  self.name = tbl.name
   self.func = setfenv(tbl[1], tbl.component)
 
   -- TODO
 
   self:update()
+
+  if tbl.name then c[tbl.name] = self end
 end
 
 -- evaluate name dependencies
@@ -51,11 +52,12 @@ end
 
 function Binding.static.beforeInstance(proto, c, name)
   local tbl = proto.args[1]
-  tbl.component, tbl.name = c, name
+  tbl.component = c
 
   -- no need to wait for dyamic properties now, let prototype continue
   if c.isCompleted then return nil end
 
+  tbl.name = name
   -- return a placeholder and register to update after all dynamic properties
   -- are present
   c:connect("completed", function() Binding:_new(tbl) end)

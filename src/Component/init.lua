@@ -413,12 +413,11 @@ function Component:set(name, value)
 
   -- if value type is complex, try assigning directly
   local v = p[1]
-  if type(v) == "table" then
-    if v:set(value) then return end
-  end
+  if type(v) == "table" and v:set(value) then return end
 
+  local v = type(value) == "table" and value:get() or value
   -- if value type is basic or would change: check matcher
-  assert(p.matcher(value), string.format(_error_wrong_type,
+  assert(p.matcher(v), string.format(_error_wrong_type,
     tostring(value), name, tostring(p.matcher)))
 
   _set(self, p, name, value)
