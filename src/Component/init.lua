@@ -394,15 +394,12 @@ end
 Component.__index = Component.get
 
 local function _set(self, property, name, value)
-  if prototype.isPrototype(value) then
-    value = value(self, name)
-  end
-
   property[1] = value
   _notify_change(self, name, value)
 end
 
 function Component:_set(name, value)
+  if prototype.isPrototype(value) then value = value(self, name) end
   _set(self, self.properties[name], name, value)
 end
 
@@ -415,7 +412,9 @@ function Component:set(name, value)
   local v = p[1]
   if type(v) == "table" and v:set(value) then return end
 
-  local v = type(value) == "table" and value:get() or value
+  if prototype.isPrototype(value) then value = value(self, name) end
+  v = type(value) == "table" and value:get() or value
+
   -- if value type is basic or would change: check matcher
   assert(p.matcher(v), string.format(_error_wrong_type,
     tostring(value), name, tostring(p.matcher)))

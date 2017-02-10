@@ -34,7 +34,7 @@ function Binding:initialize(tbl)
 
   self:update()
 
-  if tbl.name then c[tbl.name] = self end
+  if tbl.name then tbl.component[tbl.name] = self end
 end
 
 -- evaluate name dependencies
