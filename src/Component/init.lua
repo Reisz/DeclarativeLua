@@ -397,7 +397,7 @@ local function _set(self, property, name, value)
   if prototype.isPrototype(value) then
     value = value(self, name)
   end
-  
+
   property[1] = value
   _notify_change(self, name, value)
 end

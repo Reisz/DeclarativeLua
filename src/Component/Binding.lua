@@ -1,9 +1,27 @@
 --- @classmod Component.Binding
 local class = require "middleclass"
-local array = require "array"
-
 
 local Component = require "Component"
+
+-- use setfenv of Lua or simulate using upvaluejoin
+local setfenv = setfenv
+if not setfenv then
+  setfenv = function(fn, env)
+    local i = 1
+    repeat
+      local name = debug.getupvalue(fn, i)
+
+      if name == "_ENV" then
+        debug.upvaluejoin(fn, i, (function() return env end), 1)
+        break
+      end
+
+      i = i + 1
+    until not name
+
+    return fn
+  end
+end
 
 local Binding = class("Binding")
 
@@ -11,9 +29,10 @@ local Binding = class("Binding")
 function Binding:initialize(tbl)
   self.component = tbl.component
   self.name = tbl.name
-  
+  self.func = setfenv(tbl[1], tbl.component)
+
   -- TODO
-  
+
   self:update()
 end
 
@@ -21,29 +40,41 @@ end
 function Binding.static.prototyped(_, tbl)
   local dependencies = {}
   local fn = tbl[1]
-  
+
+  setfenv(fn, {})
+
   -- TODO
-  
+
   tbl.dependencies = dependencies
 end
 
--- Return a placeholder and register to update after all dynamic properties
--- are present
+
 function Binding.static.beforeInstance(proto, c, name)
   local tbl = proto.args[1]
   tbl.component, tbl.name = c, name
+
+  -- no need to wait for dyamic properties now, let prototype continue
+  if c.isCompleted then return nil end
+
+  -- return a placeholder and register to update after all dynamic properties
+  -- are present
   c:connect("completed", function() Binding:_new(tbl) end)
-  
+
   return Component._placeholder
 end
 
--- update to new current value
+-- always let Component override this
+function Binding.set() return false end
+function Binding:get() return self.value end
+
 function Binding:update()
-  local value = nil
-  
-  -- TODO
-  
-  self.component:set(self.name, value)
+  -- update to new current value
+  local value = self.func()
+
+  -- do nothing when result is guaranteed to be the same value
+  if type(value) ~= "table" and self.value == value then return end
+  self.value = value
+  self:changed()
 end
 
 return Component.declareType(Binding)
